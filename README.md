@@ -38,9 +38,10 @@ pip install -r requirements.txt
 
 ۳. تنظیمات اتصال دیتابیس
 در فایل db_manager.py متغیرهای مربوط به اتصال را مطابق مشخصات سرور خود مقداردهی کنید:
-SERVER_NAME = r'YOUR_SERVER_NAME'  # e.g., (local)\SQLEXPRESS or localhost
+
+SERVER_NAME = r'YOUR_SERVER_NAME'
 DATABASE_NAME = 'GymManagementDB'
-USERNAME = 'YOUR_SQL_USERNAME'     # Default is usually 'sa'
+USERNAME = 'YOUR_SQL_USERNAME'
 PASSWORD = 'YOUR_SQL_PASSWORD'
 
 ۴. تولید داده‌های نمونه (اختیاری)
