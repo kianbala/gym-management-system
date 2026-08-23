@@ -40,9 +40,13 @@ pip install -r requirements.txt
 در فایل db_manager.py متغیرهای مربوط به اتصال را مطابق مشخصات سرور خود مقداردهی کنید:
 
 SERVER_NAME = r'YOUR_SERVER_NAME'
+
 DATABASE_NAME = 'GymManagementDB'
+
 USERNAME = 'YOUR_SQL_USERNAME'
+
 PASSWORD = 'YOUR_SQL_PASSWORD'
+
 
 ۴. تولید داده‌های نمونه (اختیاری)
 برای پر کردن دیتابیس با داده‌های واقعی جهت تست ماژول هوش مصنوعی دستور زیر را در ترمینال اجرا کنید:
