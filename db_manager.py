@@ -9,10 +9,10 @@ if sys.stdout.encoding.lower() != 'utf-8':
     except AttributeError:
         pass
 
-SERVER_NAME = r'(local)\SQLSERVER2022'
+SERVER_NAME = r''
 DATABASE_NAME = 'GymManagementDB'
-USERNAME = 'sa'
-PASSWORD = 'kian123456'
+USERNAME = ''
+PASSWORD = ''
 
 CONN_STR = (
     f"DRIVER={{SQL Server}};"
