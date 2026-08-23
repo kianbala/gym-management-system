@@ -30,15 +30,19 @@ Database: Microsoft SQL Server
 Libraries: Pandas, PyODBC, NumPy, Matplotlib
 
 🚀 راهنمای نصب و اجرای پروژه
+
 ۱. پیش‌نیازها
+
 ابتدا پایتون و SQL Server را روی سیستم خود نصب کنید. سپس اسکریپت ساخت جداول دیتابیس (create_table.sql) را در SQL Server اجرا کنید تا پایگاه داده GymManagementDB ساخته شود.
 
 ۲. نصب کتابخانه‌ها
+
 دستور زیر را در ترمینال اجرا کنید تا تمامی وابستگی‌ها نصب شوند:
 
 pip install -r requirements.txt
 
 ۳. تنظیمات اتصال دیتابیس
+
 در فایل db_manager.py متغیرهای مربوط به اتصال را مطابق مشخصات سرور خود مقداردهی کنید:
 
 SERVER_NAME = r'YOUR_SERVER_NAME'
