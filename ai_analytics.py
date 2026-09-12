@@ -17,14 +17,14 @@ def get_hourly_occupancy():
     conn.close()
     
     if df.empty:
-        return pd.DataFrame({'hour': list(range(8, 24)), 'checkin_count': [0]*16})
+        return pd.DataFrame({'hour': list(range(0, 24)), 'checkin_count': [0]*24})
     
     df['checkin_datetime'] = pd.to_datetime(df['checkin_datetime'])
     df['hour'] = df['checkin_datetime'].dt.hour
     
     hourly_counts = df.groupby('hour').size().reset_index(name='checkin_count')
     
-    all_hours = pd.DataFrame({'hour': list(range(8, 24))})
+    all_hours = pd.DataFrame({'hour': list(range(0, 24))})
     result = pd.merge(all_hours, hourly_counts, on='hour', how='left').fillna(0)
     result['checkin_count'] = result['checkin_count'].astype(int)
     
