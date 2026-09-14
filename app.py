@@ -19,6 +19,7 @@ from ai_analytics import get_hourly_occupancy, predict_churn_risk
 
 st.set_page_config(page_title="سامانه مدیریت هوشمند باشگاه", layout="wide")
 
+# تنظیمات استایل RTL و فونت
 st.markdown("""
     <style>
     html, body, [class*="css"] {
@@ -57,7 +58,7 @@ if choice == "داشبورد و اعضا":
     col_search, col_filter = st.columns([2, 1])
     
     with col_search:
-        search_dash = st.text_input("🔍 جستجوی عضو (نام، شماره، کد ملی یا کد عضویت):", placeholder="مثلاً: کیان، کیانا، 0912 یا 1000...")
+        search_dash = st.text_input("🔍 جستجوی عضو (نام، شماره، کد ملی یا کد عضویت):", placeholder="مثلاً: کیان، 0912 یا 1000...")
         
     df = search_dashboard_members(search_dash)
     
@@ -78,11 +79,27 @@ if choice == "داشبورد و اعضا":
             'full_name': 'نام و نام خانوادگی',
             'national_id': 'کد ملی',
             'phone_number': 'شماره تماس',
+            'package_title': 'نوع بسته',
             'subscription_id': 'کد اشتراک',
             'remaining_sessions': 'جلسات باقی‌مانده',
             'end_date': 'تاریخ انقضا',
-            'status': 'وضعیت'
+            'status': 'وضعیت',
+            'days_absent': 'روزهای غیبت'
         })
+        
+        cols_order = [
+            'کد عضویت', 'نام و نام خانوادگی', 'کد ملی', 'شماره تماس', 
+            'نوع بسته', 'کد اشتراک', 'جلسات باقی‌مانده', 'تاریخ انقضا', 
+            'وضعیت', 'روزهای غیبت'
+        ]
+        df_display = df_display[[c for c in cols_order if c in df_display.columns]]
+        
+        # نگاشت ۱- به «بدون تردد» و تبدیل یکدست به رشته برای جلوگیری از خطای PyArrow
+        if 'روزهای غیبت' in df_display.columns:
+            df_display['روزهای غیبت'] = df_display['روزهای غیبت'].apply(
+                lambda x: "بدون تردد" if (pd.isna(x) or x == -1 or str(x) in ['-1', '-1.0']) else str(int(x) if isinstance(x, (int, float)) and not pd.isna(x) else x)
+            )
+        
         st.dataframe(df_display, use_container_width=True, hide_index=True)
     else:
         st.info("هیچ عضوی با این مشخصات یافت نشد.")
@@ -90,7 +107,7 @@ if choice == "داشبورد و اعضا":
 # --- بخش ۲: ثبت عضو جدید ---
 elif choice == "ثبت عضو جدید":
     st.subheader("➕ ثبت عضو جدید")
-    with st.form("add_member_form"):
+    with st.form("add_member_form", clear_on_submit=True):
         col1, col2 = st.columns(2)
         with col1:
             first_name = st.text_input("نام")
@@ -114,21 +131,23 @@ elif choice == "ثبت عضو جدید":
                     success, msg = add_member(first_name_clean, last_name_clean, national_id, phone_number)
                     if success:
                         st.success(msg)
+                        time.sleep(1)
+                        st.rerun()
                     else:
                         st.error(msg)
             else:
-                st.warning("لطفاً تمامی فیلدها (از جمله نام و نام خانوادگی) را پر کنید.")
+                st.warning("لطفاً تمامی فیلدها را پر کنید.")
 
 # --- بخش ۳: ثبت ورود ---
 elif choice == "ثبت ورود (تردد)":
     st.subheader("🚪 ثبت ورود ورزشکار و کسر جلسه")
     
-    search_input = st.text_input("🔍 جستجوی ورزشکار (نام، شماره تماس یا کد ملی):", placeholder="مثلاً: سعیدی علی، یا 0912...")
+    search_input = st.text_input("🔍 جستجوی ورزشکار (نام، شماره تماس، کد ملی یا کد عضویت):", placeholder="مثلاً: علی، 0912 یا کد عضویت...")
     
     members_list = search_members_for_checkin(search_input)
     
     if members_list:
-        st.caption(f"🔍 تعداد {len(members_list)} مورد یافت شد. از لیست زیر انتخاب کنید:")
+        st.caption(f"🔍 تعداد {len(members_list)} مورد یافت شد:")
         
         options = {}
         for m in members_list:
@@ -158,7 +177,7 @@ elif choice == "ثبت ورود (تردد)":
 elif choice == "تخصیص بسته":
     st.subheader("💳 اختصاص بسته جدید به عضو")
     
-    search_input = st.text_input("🔍 جستجوی ورزشکار (نام، شماره تماس یا کد ملی):", placeholder="مثلاً: مه، حسین، یا 0912...", key="assign_search")
+    search_input = st.text_input("🔍 جستجوی ورزشکار (نام، شماره تماس، کد ملی یا کد عضویت):", placeholder="مثلاً: حسین، 0912...", key="assign_search")
     
     all_members = search_all_members(search_input)
     
@@ -177,7 +196,7 @@ elif choice == "تخصیص بسته":
         if selected_member['can_assign']:
             st.info(f"✅ این کاربر وضعیت {selected_member['status_text']} دارد و آماده ثبت بسته جدید است.")
         else:
-            st.warning(f"⚠️ {selected_member['status_text']}. تا زمانی که جلسات به اتمام نرسد یا انقضا نیاید امکان بسته جدید نیست.")
+            st.warning(f"⚠️ {selected_member['status_text']}. تا زمانی که جلسات به اتمام نرسد یا انقضا نیاید امکان ثبت بسته جدید نیست.")
 
         packages_df = get_all_packages()
         if not packages_df.empty:
@@ -262,10 +281,15 @@ elif choice == "📊 تحلیل و هوش مصنوعی":
     with col2:
         st.write("### ⚠️ پیش‌بینی ریسک ریزش اعضا (گزارش مستقیم از SQL View)")
         
-        # دریافت و نمایش گزارش مستقیم از View دیتابیس
         df_view = get_churn_analytics_report()
         
         if not df_view.empty:
+            # نگاشت دقیق ۱- به «بدون تردد» و تبدیل یکدست داده‌ها برای PyArrow
+            for col in df_view.columns:
+                if 'absent' in col.lower() or 'غیبت' in col:
+                    df_view[col] = df_view[col].apply(
+                        lambda x: "بدون تردد" if (pd.isna(x) or x == -1 or str(x) in ['-1', '-1.0']) else str(int(x) if isinstance(x, (int, float)) and not pd.isna(x) else x)
+                    )
             st.dataframe(df_view, use_container_width=True, hide_index=True)
             st.caption("این اطلاعات مستقیماً از نمای تحلیلی دیتابیس (vw_MemberChurnAnalytics) فراخوانی شده است.")
         else:
@@ -355,35 +379,40 @@ elif choice == "مدیریت و حذف":
     confirm_text = st.text_input("برای تایید، عبارت 'RESET' را به انگلیسی وارد کنید:")
     
     if confirm_text == "RESET":
+        if 'reset_requested' not in st.session_state:
+            st.session_state.reset_requested = False
+
         col1, col2 = st.columns([1, 1])
         with col1:
-            start_reset = st.button("🚨 شروع پاکسازی (با مهلت ۵ ثانیه انصراف)")
-            
-        if start_reset:
+            if st.button("🚨 شروع پاکسازی (با مهلت ۵ ثانیه انصراف)"):
+                st.session_state.reset_requested = True
+        
+        with col2:
+            if st.session_state.reset_requested:
+                if st.button("❌ انصراف و لغو عملیات"):
+                    st.session_state.reset_requested = False
+                    st.info("عملیات پاکسازی با موفقیت لغو شد.")
+                    st.rerun()
+
+        if st.session_state.reset_requested:
             progress_bar = st.progress(100)
             status_text = st.empty()
             
-            canceled = False
-            with col2:
-                if st.button("❌ انصراف و لغو عملیات"):
-                    canceled = True
-            
             for i in range(5, 0, -1):
-                if canceled:
+                if not st.session_state.reset_requested:
                     break
                 status_text.warning(f"⚠️ پاکسازی دیتابیس تا {i} ثانیه دیگر انجام می‌شود... در صورت پشیمانی دکمه انصراف را بزنید!")
                 progress_bar.progress(i * 20)
                 time.sleep(1)
                 
-            if not canceled:
+            if st.session_state.reset_requested:
                 status_text.empty()
                 progress_bar.empty()
                 try:
                     reset_all_data()
+                    st.session_state.reset_requested = False
                     st.success("🎉 تمامی داده‌ها با موفقیت پاک شدند و سیستم کاملاً ریست شد.")
+                    time.sleep(1)
+                    st.rerun()
                 except Exception as e:
                     st.error(f"خطا در ریست دیتابیس: {e}")
-            else:
-                status_text.empty()
-                progress_bar.empty()
-                st.info("عملیات پاکسازی با موفقیت لغو شد.")
